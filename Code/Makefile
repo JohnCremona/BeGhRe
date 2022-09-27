@@ -60,9 +60,9 @@ all: tests
 sources: ccs headers
 	chmod a+r *.h *.cc
 
-ccs: cubic_utils.cc cubic_forms_support.cc cubic_forms_support.cc
+ccs: cubic_utils.cc TME.cc cubic_forms_support.cc cubic_forms_support.cc
 
-headers: cubic_utils.h
+headers: cubic_utils.h TME.h
 
 %.o:   %.cc
 	$(CC) $(CFLAGS) $<
@@ -70,12 +70,18 @@ headers: cubic_utils.h
 TESTS = cubic_forms_conductor cubic_forms_support
 tests: $(TESTS)
 
-cubic_forms_conductor: cubic_forms_conductor.o cubic_utils.o
-	$(CC) -o cubic_forms_conductor cubic_forms_conductor.o cubic_utils.o $(LFLAGS)
+clean:
+	rm -f $(TESTS)
+	rm -f *.o *~
+
+cubic_forms_conductor: cubic_forms_conductor.o cubic_utils.o TME.o
+	$(CC) -o cubic_forms_conductor cubic_forms_conductor.o cubic_utils.o TME.o $(LFLAGS)
 
 cubic_forms_support: cubic_forms_support.o cubic_utils.o
 	$(CC) -o cubic_forms_support cubic_forms_support.o cubic_utils.o $(LFLAGS)
 
-cubic_forms_conductor.o: cubic_forms_conductor.cc cubic_utils.h
+cubic_forms_conductor.o: cubic_forms_conductor.cc cubic_utils.h TME.h
 cubic_forms_support.o: cubic_forms_support.cc cubic_utils.h
 cubic_utils.o: cubic_utils.h cubic_utils.cc
+TME.o: cubic_utils.h TME.h
+

@@ -353,7 +353,8 @@ modpCheckDivRHS:=function(F,q)
 	Zmodq:=ResidueClassRing(q);
     end if;
     for u,v in [0..q-1] do
-	if [u,v] ne [0,0] then
+            //	if [u,v] ne [0,0] then
+            if Gcd(u,v) eq 1 then
 	    F_q:=Zmodq!(Evaluate(F,[u,v]));
 	    if F_q notin FmodqList then
 		Append(~FmodqList,F_q);
@@ -668,17 +669,27 @@ seqEnumToString:=function(X : quotes:=false)
     return strX;
 end function;
 
-procedure run(N)
+procedure run(N, output)
 /* N is a positive integer */
+/* if output is true, write to file, otherwise write to screen */
   sN := IntegerToString(N);
-  OutFile:="./Data/TMForms/" cat sN cat "Forms.csv";
-  OF := Open(OutFile, "w");
   validForms:=reducedForms(N);
   print "Found ", #validForms, "forms for N = " cat sN;
+  if output then
+    OutFile:="./Data/TMForms/" cat sN cat "Forms.csv";
+    OF := Open(OutFile, "w");
+  end if;
   for form in validForms do
     alist,a,primelist:=Explode(form);
-    fprintf OF, "%o,%o,%o\n",seqEnumToString(alist),
+    if output then
+      fprintf OF, "%o,%o,%o\n",seqEnumToString(alist),
 	    IntegerToString(a),seqEnumToString(primelist);
+    else
+      printf  "%o,%o,%o\n",seqEnumToString(alist),
+	    IntegerToString(a),seqEnumToString(primelist);
+    end if;
   end for;
-  print "Data for N = " cat sN cat " written to " cat OutFile;
+  if output then
+    print "Data for N = " cat sN cat " written to " cat OutFile;
+  end if;
 end procedure;

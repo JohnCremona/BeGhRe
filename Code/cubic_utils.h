@@ -1,4 +1,4 @@
-
+// Some simple utilities which should really be in eclib's cubic functions:
 bigint content(const cubic& F);
 int is_primitive(const cubic& F);
 
@@ -9,14 +9,14 @@ vector<bigint> roots_mod(const cubic& F, const bigint& q);
 // Return 1 iff F has a projective root mod q:
 int has_roots_mod(const cubic& F, const bigint& q);
 
-vector<int> alpha0list(int alpha);
-vector<int> beta0list(int beta);
+// multiply all integers in a list by a constant:
+vector<bigint> multiply_list(const bigint& a, const vector<bigint>& L);
 
-// eclib has a function is_valid_conductor(N) for a long int n
+// multiply all integers in L1 by all in L2:
+vector<bigint> multiply_lists(const vector<bigint>& L1, const vector<bigint>& L2);
 
-// for p||N and p not dividing D=disc(F) we require that F(u,v)=0 (mod
-// p) has a nontrivial solution:
-int local_test(const cubic& F, const bigint& D, const bigint& p);
+// multiply all integers in L by p^e for e in exponents:
+vector<bigint> multiply_list_by_powers(const bigint& p, const vector<int>& exponents, const vector<bigint>& L);
 
 // for q prime > 3, returns a list of representatives of the values of
 // F(u,v) mod q modulo cubes

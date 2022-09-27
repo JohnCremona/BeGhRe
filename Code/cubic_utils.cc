@@ -6,6 +6,40 @@
 
 #include "cubic_utils.h"
 
+// multiply all integers in a list by a constant:
+vector<bigint> multiply_list(const bigint& a, const vector<bigint>& L)
+{
+  vector<bigint> aL = L;
+  for (auto x=aL.begin(); x!=aL.end(); ++x)
+    (*x) *= a;
+  return aL;
+}
+
+// multiply all integers in a list by all in a second list:
+vector<bigint> multiply_lists(const vector<bigint>& L1, const vector<bigint>& L2)
+{
+  vector<bigint> L3;
+  L3.reserve(L1.size()*L2.size());
+  for (auto x=L1.begin(); x!=L1.end(); ++x)
+    for (auto y=L2.begin(); y!=L2.end(); ++y)
+      L3.push_back((*x)*(*y));
+  return L3;
+}
+
+// multiply all integers in L by p^e for e in exponents:
+vector<bigint> multiply_list_by_powers(const bigint& p, const vector<int>& exponents, const vector<bigint>& L)
+{
+  vector<bigint> peL;
+  peL.reserve(L.size()*exponents.size());
+  for (auto e=exponents.begin(); e!=exponents.end(); ++e)
+    {
+      bigint x = pow(p, *e);
+      for (auto y=L.begin(); y!=L.end(); ++y)
+        peL.push_back(x*(*y));
+    }
+  return peL;
+}
+
 // Some simple utilities which should really be in eclib's cubic functions:
 
 bigint content(const cubic& F)
@@ -29,53 +63,6 @@ vector<bigint> roots_mod(const cubic& F, const bigint& q)
 int has_roots_mod(const cubic& F, const bigint& q)
 {
   return div(q,F.a()) || roots_mod(F,q).size() > 0;
-}
-
-// Now some more serious functions used in the algorithm
-
-vector<int> alpha0list(int alpha)
-{
-  switch (alpha)
-    {
-    case 0:
-      return {2};
-    case 1: case 5:
-      return {2,3};
-    case 2:
-      return {2,4};
-    case 3: case 4: case 6:
-      return {2,3,4};
-    case 7:
-      return {3,4};
-    case 8:
-      return {3};
-    default: // will not happen
-      return {};
-    }
-}
-
-vector<int> beta0list(int beta)
-{
-  switch (beta)
-    {
-    case 0:
-      return {0};
-    case 1:
-      return {0,1};
-    case 2:
-      return {0,1,3};
-    default:
-      return {beta};
-    }
-}
-
-// for p||N and p not dividing D=disc(F) we require that F(u,v)=0 (mod
-// p) has a nontrivial solution:
-int local_test(const cubic& F, const bigint& D, const bigint& p)
-{
-  if (div(p,D))
-    return 1; // no condition to pass
-  return has_roots_mod(F, p);
 }
 
 int is_cube(const bigint& a, const bigint& q)
@@ -145,27 +132,32 @@ vector<bigint> image_mod_cubes(const cubic& F, const bigint& q)
 // mod q.
 int modpCheck(const cubic& F, const bigint& a, const vector<bigint>& primes, const bigint& q)
 {
-  if (div(2,q+1)) // F takes one and hence all nonzero values since all are cubes
+  // So we don't have to construct copies of primes with q removed:
+  if (std::find(primes.begin(), primes.end(), q)!=primes.end())
+    return 1;
+
+  if (div(2,q+1)) // then F takes one and hence all nonzero values since all are cubes
     return 1;
 
   for (auto pi = primes.begin(); pi!=primes.end(); ++pi)
-    if (!is_cube(*pi,q)) // powers of p cover all cosets mod cubes
+    if (!is_cube(*pi,q)) // then powers of p cover all cosets mod cubes
       return 1;
 
-  // Now all p are cubes mod q so can be ignored
+  // Now all p are cubes mod q so can be ignored, we just check if F
+  // takes the value a (mod cubes)
   vector<bigint> images = image_mod_cubes(F, q);
   bigint b = invmod(a,q);
   for (auto ci = images.begin(); ci!=images.end(); ++ci)
     {
-      if (is_zero(*ci)) // if 0 is a value, ignore it0 as a value (if it is)
+      if (is_zero(*ci)) // if 0 is a value, ignore it
         continue;
-      if (is_cube(b*(*ci),q))
+      if (is_cube(b*(*ci),q)) // i.e. a=c mod cubes
         return 1;
     }
   return 0;
 }
 
-// similar to AG's modpcheckDivRHS. Return 1 iff there exists
+// similar to AG's modpCheckdivrhs. Return 1 iff there exists
 // primitive (u,v) such that F(u,v)=0 (mod a).
 int modaCheck(const cubic& F, const bigint& a)
 {
