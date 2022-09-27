@@ -9,7 +9,7 @@
 #include "TME.h"
 
 //#define DEBUG
-#define VERBOSE
+//#define VERBOSE
 
 int main ()
 {
@@ -35,12 +35,17 @@ int main ()
 
       vector<TM_eqn> TM_eqns = get_TMeqnsN(NN);
 #ifdef VERBOSE
-      cout << TM_eqns.size() << "TM equations for conductor " << n << endl;
+      int neqns = TM_eqns.size();
+      if (neqns)
+        cout << neqns;
+      else
+        cout <<"No";
+      cout << " TM equations for conductor " << n << endl;
 #endif
 
       for (auto T = TM_eqns.begin(); T!=TM_eqns.end(); ++T)
         {
-          cout << string(*T) << endl;
+          cout << n << "," << string(*T) << endl;
         }
     }
 }

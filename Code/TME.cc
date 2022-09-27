@@ -162,7 +162,7 @@ vector<cubic> get_cubics(const Ddata& DD)
                         0); // verbosity level
 }
 
-#define DEBUG_LOCAL_TEST
+//#define DEBUG_LOCAL_TEST
 
 int TM_eqn::local_test()
 {

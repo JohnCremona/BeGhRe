@@ -52,17 +52,19 @@ int is_primitive(const cubic& F)
   return content(F)==1;
 }
 
-// affine roots of F mod q, assuming leading coefficient F.a() is
-// nonzero:
+// affine roots of F mod q.
+// NB rootsmod requires a non-constant polynomial
 vector<bigint> roots_mod(const cubic& F, const bigint& q)
 {
-  vector<bigint> coeffs = {F.a(), F.b(), F.c(), F.d()};
-  return rootsmod(coeffs, q);
+  bigint a(F.a()%q), b(F.b()%q), c(F.c()%q), d(F.d()%q);
+  if (is_zero(a) && is_zero(b) && is_zero(c))
+    return {};
+  return rootsmod({d,c,b,a}, q);
 }
 
 int has_roots_mod(const cubic& F, const bigint& q)
 {
-  return div(q,F.a()) || roots_mod(F,q).size() > 0;
+  return div(q,F.a()) || (roots_mod(F,q).size() > 0);
 }
 
 int is_cube(const bigint& a, const bigint& q)
