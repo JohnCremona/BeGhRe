@@ -8,8 +8,7 @@
 
 #include "TME.h"
 
-//#define DEBUG
-//#define VERBOSE
+#define VERBOSE
 
 int main ()
 {

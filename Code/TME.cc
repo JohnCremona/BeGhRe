@@ -132,7 +132,13 @@ vector<TM_RHS> get_RHS(const Ddata& D)
 
   // p>3, additive
   for (auto pi=D.NN.Aprimes.begin(); pi!=D.NN.Aprimes.end(); ++pi)
-    alist = multiply_list_by_powers(*pi, {0,1}, alist);
+    {
+      bigint p = *pi;
+      if (val(p,D.D)==2)
+        alist = multiply_list_by_powers(p, {0,1}, alist);
+      else
+        plist.push_back(p);
+    }
 
   vector<TM_RHS> RHSs;
   for (auto ai=alist.begin(); ai!=alist.end(); ++ai)
@@ -166,10 +172,13 @@ vector<cubic> get_cubics(const Ddata& DD)
 
 int TM_eqn::local_test()
 {
+#ifdef DEBUG_LOCAL_TEST
+  cout<<"Local testing of "<<(string)(*this)<<endl;
+#endif
   if (!modaCheck(F, RHS.a))
     {
 #ifdef DEBUG_LOCAL_TEST
-      cout<<(string)(*this)<<" fails modaCheck"<<endl;
+      cout<<" - fails modaCheck"<<endl;
 #endif
         return 0;
     }
@@ -181,20 +190,36 @@ int TM_eqn::local_test()
       bigint p = *pi;
       if (has_roots_mod(F, p)) // then F mod p roots, so we keep p as an RHS prime
         {
+#ifdef DEBUG_LOCAL_TEST
+          cout<<" - p = "<<p<<" is kept"<<endl;
+#endif
           newprimes.push_back(p);
         }
       else // F mod p has no roots...
         {
           // check (13) is satisfied, F(u,v) is not 0 mod p
-          if ((p>=3) && (val(p,DD.NN.N)==1) && div(p,DD.D))
-            return 0;
+          if ((p>=3) && (val(p,DD.NN.N)==1) && !div(p,DD.D))
+            {
+#ifdef DEBUG_LOCAL_TEST
+              cout<<" - p = "<<p<<" fails condition (13)"<<endl;
+#endif
+              return 0;
+            }
           // Now the equation has no solutions with a positive power
           // of p on RHS, and we check whether it is satisfiable mod p
           // with p not dividing the RHS:
           if (!modpCheck(F, RHS.a, RHS.plist, p))
-            return 0; // no it is not, discard this RHS
+            {
+#ifdef DEBUG_LOCAL_TEST
+              cout<<" - p = "<<p<<" fails"<<endl;
+#endif
+              return 0; // no it is not, discard this RHS
+            }
           // otherwise it is, we do *not* keep this prime and hence
           // only look for TME solutions with no p dividing the RHS
+#ifdef DEBUG_LOCAL_TEST
+          cout<<" - p = "<<p<<" passes and is removed"<<endl;
+#endif
         }
     }
   RHS.plist = newprimes;

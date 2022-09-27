@@ -473,7 +473,8 @@ localTest:=function(N,alist,a,primelist)
 		// Thus if F(u,v) = 0 mod p has only the trivial solution
 		// u = v = 0 mod p, then there is a local obstruction at p since
 		// gcd(u,v) != 1.
-		return {};
+                //print "F = ",alist," fails (13) at p=",p;
+                return {};
 	    end if;
 	    // Search for solutions to F(u,v) = a p_1^{z_1} ... p_v^{z_v} mod p
 	    // under the assumption that the exponent on p is 0.
@@ -482,6 +483,7 @@ localTest:=function(N,alist,a,primelist)
 		// There are no nontrivial solutions to
 		// F(u,v) = a p_1^{z_1} ... p_v^{z_v} mod p whether p divides
 		// the RHS or not.
+                //print "F = ",alist,", a=",a," fails modpCheck at p=",p;
 		return {};
 	    end if;
 	    Append(~toRemove,p);
@@ -489,6 +491,7 @@ localTest:=function(N,alist,a,primelist)
 	end if;
     end for;
     primelist:=[p : p in primelist | p notin toRemove];
+//print "F = ",alist,", a=",a," passes, now primelist is ",primelist;
     return {<alist,a,primelist>};
 end function;
 
@@ -692,4 +695,16 @@ procedure run(N, output)
   if output then
     print "Data for N = " cat sN cat " written to " cat OutFile;
   end if;
+end procedure;
+
+procedure runlist(Nlist, output)
+  for N in Nlist do
+     run(N,output);
+  end for;
+end procedure;
+
+procedure runrange(N1, N2, output)
+  for N in [N1..N2] do
+     run(N,output);
+  end for;
 end procedure;
