@@ -17,6 +17,8 @@ Created
     16 September 2022
 */
 
+VERBOSE_LOCAL := false; // set to true to see details of localTest()
+
 primes23:=function(alpha,beta)
     /*
       Given ord_2(N) and ord_3(N) of an elliptic curve conductor N, determines
@@ -445,6 +447,9 @@ localTest:=function(N,alist,a,primelist)
 	      which cannot appear with positive exponent on the RHS. This list
 	      is empty when a local obstruction exists.
    */
+    if VERBOSE_LOCAL then
+      print "Applying local tests to F = ",alist,", a=",a," with primelist ",primelist;
+    end if;
     QUV<U,V>:=PolynomialRing(Rationals(),2);
     Qx<x>:= PolynomialRing(Rationals());
     assert &and[a_i in Integers() : a_i in alist];
@@ -458,7 +463,10 @@ localTest:=function(N,alist,a,primelist)
 	_,hasSol:=modpCheckDivRHS(F,a);
 	// Verify the value a can divide the RHS.
 	if (hasSol eq false) then
-	    return {};
+          if VERBOSE_LOCAL then
+            print "F = ",alist,", a=",a," fails mod-a test";
+    	  end if;
+	  return {};
 	end if;
     end if;
     testPrimes:=[p : p in primelist | p lt 5000];
@@ -473,7 +481,9 @@ localTest:=function(N,alist,a,primelist)
 		// Thus if F(u,v) = 0 mod p has only the trivial solution
 		// u = v = 0 mod p, then there is a local obstruction at p since
 		// gcd(u,v) != 1.
-                //print "F = ",alist," fails (13) at p=",p;
+                if VERBOSE_LOCAL then
+                  print "F = ",alist," fails (13) at p=",p;
+                end if;
                 return {};
 	    end if;
 	    // Search for solutions to F(u,v) = a p_1^{z_1} ... p_v^{z_v} mod p
@@ -483,7 +493,9 @@ localTest:=function(N,alist,a,primelist)
 		// There are no nontrivial solutions to
 		// F(u,v) = a p_1^{z_1} ... p_v^{z_v} mod p whether p divides
 		// the RHS or not.
-                //print "F = ",alist,", a=",a," fails modpCheck at p=",p;
+                if VERBOSE_LOCAL then
+                  print "F = ",alist,", a=",a," fails modpCheck at p=",p;
+                end if;
 		return {};
 	    end if;
 	    Append(~toRemove,p);
@@ -491,7 +503,9 @@ localTest:=function(N,alist,a,primelist)
 	end if;
     end for;
     primelist:=[p : p in primelist | p notin toRemove];
-//print "F = ",alist,", a=",a," passes, now primelist is ",primelist;
+    if VERBOSE_LOCAL then
+      print "F = ",alist,", a=",a," passes, now primelist is ",primelist;
+    end if;
     return {<alist,a,primelist>};
 end function;
 
@@ -677,19 +691,29 @@ procedure run(N, output)
 /* if output is true, write to file, otherwise write to screen */
   sN := IntegerToString(N);
   validForms:=reducedForms(N);
-  print "Found ", #validForms, "forms for N = " cat sN;
   if output then
+    print "Found ", #validForms, "forms for N = " cat sN;
     OutFile:="./Data/TMForms/" cat sN cat "Forms.csv";
     OF := Open(OutFile, "w");
   end if;
   for form in validForms do
-    alist,a,primelist:=Explode(form);
+    alist,A,primelist:=Explode(form);
+    a,b,c,d := Explode(alist);
+    D:=-27*a^2*d^2+b^2*c^2+18*a*b*c*d-4*a*c^3-4*b^3*d;
     if output then
-      fprintf OF, "%o,%o,%o\n",seqEnumToString(alist),
-	    IntegerToString(a),seqEnumToString(primelist);
+      fprintf OF, "%o,%o,%o,%o,%o\n",
+      IntegerToString(N),
+      IntegerToString(D),
+      seqEnumToString(alist),
+      IntegerToString(A),
+      seqEnumToString(primelist);
     else
-      printf  "%o,%o,%o\n",seqEnumToString(alist),
-	    IntegerToString(a),seqEnumToString(primelist);
+      printf  "%o,%o,%o,%o,%o\n",
+        IntegerToString(N),
+        IntegerToString(D),
+        seqEnumToString(alist),
+        IntegerToString(A),
+        seqEnumToString(primelist);
     end if;
   end for;
   if output then

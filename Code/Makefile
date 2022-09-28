@@ -60,14 +60,14 @@ all: tests
 sources: ccs headers
 	chmod a+r *.h *.cc
 
-ccs: cubic_utils.cc TME.cc S2TME.cc S2TME.cc
+ccs: cubic_utils.cc TME.cc N2TME.cc S2TME.cc TME_compare.cc
 
 headers: cubic_utils.h TME.h
 
 %.o:   %.cc
 	$(CC) $(CFLAGS) $<
 
-TESTS = N2TME S2TME
+TESTS = N2TME S2TME TME_compare
 tests: $(TESTS)
 
 clean:
@@ -80,8 +80,12 @@ N2TME: N2TME.o cubic_utils.o TME.o
 S2TME: S2TME.o cubic_utils.o
 	$(CC) -o S2TME S2TME.o cubic_utils.o $(LFLAGS)
 
+TME_compare: TME_compare.o cubic_utils.o TME.o
+	$(CC) -o TME_compare TME_compare.o cubic_utils.o TME.o $(LFLAGS)
+
 N2TME.o: N2TME.cc cubic_utils.h TME.h
 S2TME.o: S2TME.cc cubic_utils.h
+TME_compare.o: TME_compare.cc cubic_utils.h TME.h
 cubic_utils.o: cubic_utils.h cubic_utils.cc
-TME.o: cubic_utils.h TME.h
+TME.o: cubic_utils.h TME.h TME.cc
 

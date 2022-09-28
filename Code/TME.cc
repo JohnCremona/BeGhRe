@@ -4,21 +4,21 @@
 #include <eclib/cubic.h>
 #include <assert.h>
 
-#include "cubic_utils.h"
 #include "TME.h"
 
-vector<int> signs = {1,-1};
-vector<vector<int>> alpha0list = {{2}, {2,3}, {2,4}, {2,3,4}, {2,3,4}, {2,3}, {2,3,4}, {3,4}, {3}};
-vector<vector<int>> beta0list = {{0}, {0,1}, {0,1,3}, {3}, {4}, {5}};
-vector<int> powersof2 = {1,2,4,8,16,32,64,128,256};
-vector<int> powersof3 = {1,3,9,27,81,243};
+const vector<int> signs = {1,-1};
+const vector<vector<int>> alpha0list = {{2}, {2,3}, {2,4}, {2,3,4}, {2,3,4}, {2,3}, {2,3,4}, {3,4}, {3}};
+const vector<vector<int>> beta0list = {{0}, {0,1}, {0,1,3}, {3}, {4}, {5}};
+const vector<int> powersof2 = {1,2,4,8,16,32,64,128,256};
+const vector<int> powersof3 = {1,3,9,27,81,243};
+const bigint one(1), two(2), three(3), six(6);
 
 void Ndata::init()
 {
   support = pdivs(N);
   N0 = N;
-  alpha = divide_out(N0, 2);
-  beta  = divide_out(N0, 3);
+  alpha = divide_out(N0, two);
+  beta  = divide_out(N0, three);
   for (auto pi = support.begin(); pi!=support.end(); ++pi)
     {
       bigint p = *pi;
@@ -36,6 +36,13 @@ Ddata::Ddata(const Ndata& Ndat, const bigint& D23, int al, int be, int sg)
   :NN(Ndat), D0(D23), alpha(al), beta(be), s(sg)
 {
   D = D0 * powersof2[alpha] * powersof3[beta] * s;
+}
+
+Ddata::Ddata(const Ndata& Ndat, const bigint& d)
+  :NN(Ndat), D(d), D0(d), s(sign(d))
+{
+  alpha = divide_out(D0, 2);
+  beta  = divide_out(D0, 3);
 }
 
 vector<Ddata> get_discriminants(const Ndata& NN)
@@ -76,7 +83,6 @@ map<pair<int,int>, vector<int>> beta_map = { {{0,0}, {0}},
 
 vector<TM_RHS> get_RHS(const Ddata& D)
 {
-  bigint one(1), two(2), three(3);
   vector<bigint> alist;
   alist.push_back(one);
   vector<bigint> plist;
@@ -162,10 +168,13 @@ TM_RHS::operator string() const
 
 vector<cubic> get_cubics(const Ddata& DD)
 {
-  return reduced_cubics(DD.D,
-                        0, // 0 to exclude reducibles
-                        1, // 1 for GL2-equivalence
-                        0); // verbosity level
+  vector<cubic> Flist = reduced_cubics(DD.D,
+                                       0, // 0 to exclude reducibles
+                                       1, // 1 for GL2-equivalence
+                                       0); // verbosity level
+  for(auto Fi = Flist.begin(); Fi!=Flist.end(); ++Fi)
+    gl2_normalise(*Fi);
+  return Flist;
 }
 
 //#define DEBUG_LOCAL_TEST
@@ -229,9 +238,13 @@ int TM_eqn::local_test()
 TM_eqn::operator string() const
 {
   ostringstream s;
+  s << DD.NN.N << "," << DD.D << ",";
   F.output(s);
-  return s.str() + "," + (string)RHS;
+  s << "," << (string)RHS;
+  return s.str();
 }
+
+//#define DEBUG_IMPRIMITIVE
 
 vector<TM_eqn> get_TMeqnsD(const Ddata& DD)
 {
@@ -240,9 +253,42 @@ vector<TM_eqn> get_TMeqnsD(const Ddata& DD)
   vector<TM_RHS> RHSlist = get_RHS(DD);
   for (auto Fi=Flist.begin(); Fi!=Flist.end(); ++Fi)
     {
+      cubic F = *Fi;
+      bigint g = content(F);
+      assert (div(g,six));
+      int imprimitive = (g!=one);
+      Ddata DD1 = DD;
+// if F is imprimitive with content g, we check that g divides a (skip
+// this equation of not), and fivide F and a by g, adjusting D:
+      if (imprimitive)
+        {
+#ifdef DEBUG_IMPRIMITIVE
+          cout << " - F="<<F<<" is not primitive, content is "<<g<<endl;
+#endif
+          F = divide_out(F, g);
+          DD1 = Ddata(DD.NN, DD.D/pow(g,4));
+#ifdef DEBUG_IMPRIMITIVE
+          cout << " - primitive F="<<F<<", with discriminant "<<DD1.D<<endl;
+#endif
+        }
       for (auto RHSi=RHSlist.begin(); RHSi!=RHSlist.end(); ++RHSi)
         {
-          TM_eqn T(DD, *Fi, *RHSi);
+          TM_RHS RHS = *RHSi;
+          if (imprimitive && !div(g, RHS.a))
+            {
+#ifdef DEBUG_IMPRIMITIVE
+              cout << " - skipping RHS value "<<RHS.a<<" as not a multiple of the content "<<g<<endl;
+#endif
+              continue; // skip this (F,RHS) pair
+            }
+          else
+            {
+#ifdef DEBUG_IMPRIMITIVE
+              cout << " - dividing RHS value "<<RHS.a<<" by the content "<<g<<endl;
+#endif
+              RHS.a /= g;
+            }
+          TM_eqn T(DD1, F, RHS);
           if (T.local_test())
             TMeqns.push_back(T);
         }
@@ -269,3 +315,165 @@ int local_test(const cubic& F, const Ddata& DD, const bigint& p)
   return (div(p,DD.D) || has_roots_mod(F, p));
 }
 
+istream& operator>>(istream& s, TM_eqn& tme)
+{
+  string tme_string;
+  s >> tme_string;
+  tme = TM_eqn(tme_string);
+  return s;
+}
+
+// Construct from a string N,D,[a,b,c,d],A,plist
+
+//#define DEBUG_PARSER
+
+const string ignore_chars = "[](),";
+const string space = " ";
+
+TM_eqn::TM_eqn(const string& s)
+{
+#ifdef DEBUG_PARSER
+  cout << "parsing string: "<<s<<endl;
+#endif
+  // Make a copy of s
+  string ss(s);
+  // replace commas and brackets by spaces
+  for (auto ci=ss.begin(); ci!=ss.end(); ++ci)
+    {
+      char c = *ci;
+      if (std::find(ignore_chars.begin(), ignore_chars.end(), c) != ignore_chars.end())
+        ss.replace(ci, ci+1, space);
+    }
+#ifdef DEBUG_PARSER
+  cout << " - after replacing "<<ignore_chars<<" by spaces: "<<ss<<endl;
+#endif
+  // read the first 7 integers:
+  istringstream is(ss);
+  bigint N, D, a, b, c, d, A;
+  is >> N >> D >> a >> b >> c >> d >> A >> ws;
+  Ndata NN(N);
+  DD = Ddata(NN, D);
+  F = cubic(a,b,c,d);
+  gl2_normalise(F);
+  // now read the primes (there may be none)
+  vector<bigint> plist;
+  bigint p;
+  while (!is.eof())
+    {
+      is >> p;
+      plist.push_back(p);
+      is >> ws;
+    }
+#ifdef DEBUG_PARSER
+  cout << " N="<<N<<", D="<<D<<", F=["<<a<<","<<b<<","<<c<<","<<d<<"], A="<<A<<", plist = "<<plist<<endl;
+#endif
+  RHS = TM_RHS(A, plist);
+}
+
+// Read TM equations from a file
+vector<TM_eqn> read_TMeqns(const string& filename)
+{
+  vector<TM_eqn> TM_eqns;
+  string line;
+  ifstream data(filename.c_str());
+  if (data)
+    {
+      while (data>>line)
+        {
+          TM_eqn T(line);
+          TM_eqns.push_back(T);
+        }
+      data.close();
+    }
+  return TM_eqns;
+}
+
+// Write TM equations to a file or stdout
+void write_TMeqns(vector<TM_eqn> TMEs, const string& filename)
+{
+  if (filename.compare("stdout"))
+    {
+      ofstream out(filename.c_str());
+      for (auto Ti = TMEs.begin(); Ti!=TMEs.end(); ++Ti)
+        out << (string)(*Ti) << endl;
+      out.close();
+    }
+  else
+    {
+      for (auto Ti = TMEs.begin(); Ti!=TMEs.end(); ++Ti)
+        cout << (string)(*Ti) << endl;
+    }
+}
+
+int compare_TM_eqn_lists(const vector<TM_eqn>& list1, const vector<TM_eqn>& list2, int verbose)
+{
+  int n1 = list1.size();
+  int n2 = list2.size();
+  if (n1!=n2)
+    {
+      if (verbose)
+        cout<<"List 1 has size "<<n1<<" but list 2 has size "<<n2<<endl;
+      else
+        return 0;
+    }
+  int nmatches=0;
+  vector<int> check1(n1,0), check2(n2,0);
+  vector<int>::iterator c1=check1.begin();
+  for (auto T1i=list1.begin(); T1i!=list1.end(); ++T1i)
+    {
+      TM_eqn T1 = *T1i;
+      int found = 0;
+      vector<int>::iterator c2=check2.begin();
+      for (auto T2i=list2.begin(); T2i!=list2.end() && (!found); ++T2i)
+        {
+          if (*c2==0)
+            {
+              if(verbose>1)
+                cout<<"comparing "<<(string)T1<<" and "<<(string)(*T2i)<<"..."<<flush;
+              found = T1.is_gl2_equivalent(*T2i);
+              if(found)
+                {
+                  *c1=1;
+                  *c2=1;
+                  if(verbose>1)
+                    cout<<"equivalent"<<endl;
+                }
+              else
+                {
+                  if(verbose>1)
+                    cout<<"different"<<endl;
+                }
+            }
+          c2++;
+        }
+      if (found)
+        {
+          nmatches++;
+        }
+      else
+        {
+          if (verbose)
+            cout<<"No match for "<<(string)T1<<" in list 2!"<<endl;
+        }
+      c1++;
+      if(verbose>1)
+        {
+          cout<<"After testing "<<(string)T1<<", check1 = "<<check1<<" and check2 = "<<check2<<endl;
+        }
+    }
+  int ok = (nmatches==n1) && (nmatches==n2);
+  if (verbose && !ok)
+    {
+      if (nmatches<n1)
+        cout<<(n1-nmatches)<<" equations in list 1 not in list 2"<<endl;
+      if (nmatches<n2)
+        {
+          cout<<(n2-nmatches)<<" equations in list 2 not in list 1:"<<endl;
+          vector<int>::iterator c2=check2.begin();
+          for (auto T2i=list2.begin(); T2i!=list2.end(); ++T2i, ++c2)
+            if (*c2==0)
+              cout<<(string)(*T2i)<<endl;
+        }
+    }
+  return ok;
+}

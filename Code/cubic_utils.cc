@@ -52,6 +52,60 @@ int is_primitive(const cubic& F)
   return content(F)==1;
 }
 
+// divide a cubic by a constant factor (which should divide all the coefficients)
+cubic divide_out(const cubic& F, const bigint& g)
+{
+  return cubic(F.a()/g, F.b()/g, F.c()/g, F.d()/g);
+}
+
+// for an sl2-reduced cubic, normalise w.r.t. diag(1,-1), i.e. [a,b,c,d] --> [a,-b,c,-d]
+void gl2_normalise(cubic& F)
+{
+  if (F.b()<0 || (F.b()==0 && F.d()<0))
+    {
+      unimod m;
+      F.seminegate(m);
+    }
+}
+
+// sl2/gl2-reduce a cubic
+void sl2_reduce(cubic& F)
+{
+  unimod m;
+  if (F.disc()<0)
+    F.jc_reduce(m);
+  else
+    F.hess_reduce(m);
+}
+
+void gl2_reduce(cubic& F)
+{
+  sl2_reduce(F);
+  gl2_normalise(F);
+}
+
+// Tests for sl2/gl2-equivalence and equality:
+int identical(const cubic& F, const cubic& G)
+{
+  return ((F.a()==G.a()) && (F.b()==G.b()) && (F.c()==G.c()) && (F.d()==G.d()));
+}
+
+int sl2_equivalent(const cubic& F, const cubic& G)
+{
+  cubic F1=F, G1=G;
+  sl2_reduce(F1);
+  sl2_reduce(G1);
+  return identical(F1,G1);
+}
+
+int gl2_equivalent(const cubic& F, const cubic& G)
+{
+  cubic F1=F, G1=G;
+  gl2_reduce(F1);
+  gl2_reduce(G1);
+  return identical(F1,G1);
+}
+
 // affine roots of F mod q.
 // NB rootsmod requires a non-constant polynomial
 vector<bigint> roots_mod(const cubic& F, const bigint& q)
@@ -165,6 +219,11 @@ int modaCheck(const cubic& F, const bigint& a)
 {
   if (a==1)
     return 1;
+
+  bigint g = content(F);
+  if (!div(g,a))
+    return 0;
+
   vector<bigint> plist = pdivs(a);
 
   if (plist.size()>1) // use CRT

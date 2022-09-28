@@ -1,5 +1,7 @@
 // class for holding a conductor and associated factorization data:
 
+#include "cubic_utils.h"
+
 class Ndata {
 public:
   bigint N;
@@ -22,6 +24,11 @@ public:
     init();
   }
   void init();
+  Ndata() {;}
+
+  // equality test:
+  int operator== (const Ndata& N2) const {return (N==N2.N);}
+
 };
 
 // class for holding a discriminant and associated factorization data
@@ -34,8 +41,13 @@ public:
   int alpha; // valuation of 2
   int beta;  // valuation of 3
   int s;     // sign
-  // constructor
+  // constructors
   Ddata(const Ndata& Ndat, const bigint& D23, int al, int be, int sg);
+  Ddata(const Ndata& Ndat, const bigint& d);
+  Ddata() {;}
+
+  // equality test:
+  int operator== (const Ddata& D2) const {return (NN==D2.NN && D==D2.D);}
 };
 
 // class for holding RHS data for a TM-equation
@@ -48,8 +60,14 @@ public:
   TM_RHS(const bigint& aa, const vector<bigint>& pl)
     :a(aa), plist(pl)
   {;}
+  TM_RHS()
+    :a(1), plist({})
+  {;}
   // for output:
   operator string() const;
+
+  // equality test:
+  int operator== (const TM_RHS& R2) const {return (a==R2.a && plist==R2.plist);}
 };
 
 class TM_eqn {
@@ -62,11 +80,24 @@ public:
     :DD(dd), F(f), RHS(rhs)
   {;}
 
+  // Construct from a string N,D,[a,b,c,d],A,plist
+  TM_eqn(const string& s);
+
   // local test: return 0 if impossible, else 1 (and the RHS may have changed)
   int local_test();
 
-  // for output:
+  // for output (outputs N,D,[a,b,c,d],A,plist)
   operator string() const;
+
+  // for input (parsing of a string of the same form as output)
+
+  friend istream& operator>>(istream& s, TM_eqn& tme);
+
+  // equality test:
+  int operator== (const TM_eqn& T2) const {return (DD==T2.DD && RHS==T2.RHS && identical(F,T2.F));}
+
+  // equivalence test:
+  int is_gl2_equivalent(const TM_eqn& T2) const {return (DD==T2.DD && RHS==T2.RHS && gl2_equivalent(F,T2.F));}
 };
 
 // Return a list of discriminants for one conductor
@@ -87,3 +118,11 @@ vector<TM_eqn> get_TMeqnsD(const Ddata& DD);
 
 // Return all TM equations for one conductor
 vector<TM_eqn> get_TMeqnsN(const Ndata& NN);
+
+// Read TM equations from a file
+vector<TM_eqn> read_TMeqns(const string& filename);
+
+// Write TM equations to a file or stdout
+void write_TMeqns(vector<TM_eqn> TMEs, const string& filename="stdout");
+
+int compare_TM_eqn_lists(const vector<TM_eqn>& list1, const vector<TM_eqn>& list2, int verbose=1);

@@ -8,7 +8,7 @@
 
 #include "TME.h"
 
-#define VERBOSE
+//#define VERBOSE
 
 int main ()
 {
@@ -27,12 +27,8 @@ int main ()
       if (!is_valid_conductor(n))
         continue;
 
-      Ndata NN(n);
-#ifdef VERBOSE
-      cout << "alpha, beta, N0 = " << NN.alpha << ", " << NN.beta << ", " << NN.N0 << endl;
-#endif
+      vector<TM_eqn> TM_eqns = get_TMeqnsN(n);
 
-      vector<TM_eqn> TM_eqns = get_TMeqnsN(NN);
 #ifdef VERBOSE
       int neqns = TM_eqns.size();
       if (neqns)
@@ -44,7 +40,12 @@ int main ()
 
       for (auto T = TM_eqns.begin(); T!=TM_eqns.end(); ++T)
         {
-          cout << n << "," << string(*T) << endl;
+          string s(*T);
+          cout << s << endl;
+          TM_eqn Tcopy(s);
+          string scopy(Tcopy);
+          if (s.compare(scopy))
+            cout << "*********** copy is " << scopy << endl;
         }
     }
 }
