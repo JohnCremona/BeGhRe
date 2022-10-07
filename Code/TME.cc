@@ -168,13 +168,23 @@ TM_RHS::operator string() const
 
 vector<cubic> get_cubics(const Ddata& DD)
 {
+  // (12) says that if val(3,disc(F))>=3 then restrict to b=c=0 (mod 3):
+  int eqn12 = (DD.beta < 3);
   vector<cubic> Flist = reduced_cubics(DD.D,
                                        0, // 0 to exclude reducibles
                                        1, // 1 for GL2-equivalence
                                        0); // verbosity level
+  vector<cubic> Flist2;
   for(auto Fi = Flist.begin(); Fi!=Flist.end(); ++Fi)
-    gl2_normalise(*Fi);
-  return Flist;
+    {
+      cubic F = *Fi;
+      if (eqn12 || (div(three,F.b()) && div(three,F.c())))
+        {
+          gl2_normalise(F);
+          Flist2.push_back(F);
+        }
+    }
+  return Flist2;
 }
 
 //#define DEBUG_LOCAL_TEST
@@ -364,6 +374,8 @@ TM_eqn::TM_eqn(const string& s)
       plist.push_back(p);
       is >> ws;
     }
+  // Sort the primes in the list:
+  std::sort(plist.begin(), plist.end());
 #ifdef DEBUG_PARSER
   cout << " N="<<N<<", D="<<D<<", F=["<<a<<","<<b<<","<<c<<","<<d<<"], A="<<A<<", plist = "<<plist<<endl;
 #endif
