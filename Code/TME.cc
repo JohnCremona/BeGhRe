@@ -146,6 +146,7 @@ vector<TM_RHS> get_RHS(const Ddata& D)
         plist.push_back(p);
     }
 
+  std::sort(plist.begin(), plist.end());
   vector<TM_RHS> RHSs;
   for (auto ai=alist.begin(); ai!=alist.end(); ++ai)
     RHSs.push_back(TM_RHS(*ai, plist));
@@ -180,7 +181,7 @@ vector<cubic> get_cubics(const Ddata& DD)
       cubic F = *Fi;
       if (eqn12 || (div(three,F.b()) && div(three,F.c())))
         {
-          gl2_normalise(F);
+          F.normalise(); // 1 for gl2
           Flist2.push_back(F);
         }
     }
@@ -207,7 +208,7 @@ int TM_eqn::local_test()
   for (auto pi=RHS.plist.begin(); pi!=RHS.plist.end(); ++pi)
     {
       bigint p = *pi;
-      if (has_roots_mod(F, p)) // then F mod p roots, so we keep p as an RHS prime
+      if (F.has_roots_mod(p)) // then F mod p roots, so we keep p as an RHS prime
         {
 #ifdef DEBUG_LOCAL_TEST
           cout<<" - p = "<<p<<" is kept"<<endl;
@@ -264,7 +265,7 @@ vector<TM_eqn> get_TMeqnsD(const Ddata& DD)
   for (auto Fi=Flist.begin(); Fi!=Flist.end(); ++Fi)
     {
       cubic F = *Fi;
-      bigint g = content(F);
+      bigint g = F.content();
       assert (div(g,six));
       int imprimitive = (g!=one);
       Ddata DD1 = DD;
@@ -275,7 +276,7 @@ vector<TM_eqn> get_TMeqnsD(const Ddata& DD)
 #ifdef DEBUG_IMPRIMITIVE
           cout << " - F="<<F<<" is not primitive, content is "<<g<<endl;
 #endif
-          F = divide_out(F, g);
+          F = F / g;
           DD1 = Ddata(DD.NN, DD.D/pow(g,4));
 #ifdef DEBUG_IMPRIMITIVE
           cout << " - primitive F="<<F<<", with discriminant "<<DD1.D<<endl;
@@ -322,7 +323,7 @@ vector<TM_eqn> get_TMeqnsN(const Ndata& NN)
 // p) has a nontrivial solution:
 int local_test(const cubic& F, const Ddata& DD, const bigint& p)
 {
-  return (div(p,DD.D) || has_roots_mod(F, p));
+  return (div(p,DD.D) || F.has_roots_mod(p));
 }
 
 istream& operator>>(istream& s, TM_eqn& tme)
@@ -364,7 +365,9 @@ TM_eqn::TM_eqn(const string& s)
   Ndata NN(N);
   DD = Ddata(NN, D);
   F = cubic(a,b,c,d);
-  gl2_normalise(F);
+  unimod m;
+  F.sl2_reduce(m);
+  F.normalise();
   // now read the primes (there may be none)
   vector<bigint> plist;
   bigint p;

@@ -94,10 +94,10 @@ public:
   friend istream& operator>>(istream& s, TM_eqn& tme);
 
   // equality test:
-  int operator== (const TM_eqn& T2) const {return (DD==T2.DD && RHS==T2.RHS && identical(F,T2.F));}
+  int operator== (const TM_eqn& T2) const {return (DD==T2.DD && RHS==T2.RHS && F==T2.F);}
 
   // equivalence test:
-  int is_gl2_equivalent(const TM_eqn& T2) const {return (DD==T2.DD && RHS==T2.RHS && gl2_equivalent(F,T2.F));}
+  int is_gl2_equivalent(const TM_eqn& T2) const {return (DD==T2.DD && RHS==T2.RHS && F.gl2_equivalent(T2.F));}
 };
 
 // Return a list of discriminants for one conductor

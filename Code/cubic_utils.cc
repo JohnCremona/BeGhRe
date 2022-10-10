@@ -40,87 +40,6 @@ vector<bigint> multiply_list_by_powers(const bigint& p, const vector<int>& expon
   return peL;
 }
 
-// Some simple utilities which should really be in eclib's cubic functions:
-
-bigint content(const cubic& F)
-{
-  return gcd(gcd(gcd(F.a(), F.b()), F.c()), F.d());
-}
-
-int is_primitive(const cubic& F)
-{
-  return content(F)==1;
-}
-
-// divide a cubic by a constant factor (which should divide all the coefficients)
-cubic divide_out(const cubic& F, const bigint& g)
-{
-  return cubic(F.a()/g, F.b()/g, F.c()/g, F.d()/g);
-}
-
-// for an sl2-reduced cubic, normalise w.r.t. diag(1,-1), i.e. [a,b,c,d] --> [a,-b,c,-d]
-void gl2_normalise(cubic& F)
-{
-  if (F.b()<0 || (F.b()==0 && F.d()<0))
-    {
-      unimod m;
-      F.seminegate(m);
-    }
-}
-
-// sl2/gl2-reduce a cubic
-void sl2_reduce(cubic& F)
-{
-  unimod m;
-  if (F.disc()<0)
-    F.jc_reduce(m);
-  else
-    F.hess_reduce(m);
-}
-
-void gl2_reduce(cubic& F)
-{
-  sl2_reduce(F);
-  gl2_normalise(F);
-}
-
-// Tests for sl2/gl2-equivalence and equality:
-int identical(const cubic& F, const cubic& G)
-{
-  return ((F.a()==G.a()) && (F.b()==G.b()) && (F.c()==G.c()) && (F.d()==G.d()));
-}
-
-int sl2_equivalent(const cubic& F, const cubic& G)
-{
-  cubic F1=F, G1=G;
-  sl2_reduce(F1);
-  sl2_reduce(G1);
-  return identical(F1,G1);
-}
-
-int gl2_equivalent(const cubic& F, const cubic& G)
-{
-  cubic F1=F, G1=G;
-  gl2_reduce(F1);
-  gl2_reduce(G1);
-  return identical(F1,G1);
-}
-
-// affine roots of F mod q.
-// NB rootsmod requires a non-constant polynomial
-vector<bigint> roots_mod(const cubic& F, const bigint& q)
-{
-  bigint a(F.a()%q), b(F.b()%q), c(F.c()%q), d(F.d()%q);
-  if (is_zero(a) && is_zero(b) && is_zero(c))
-    return {};
-  return rootsmod({d,c,b,a}, q);
-}
-
-int has_roots_mod(const cubic& F, const bigint& q)
-{
-  return div(q,F.a()) || (roots_mod(F,q).size() > 0);
-}
-
 int is_cube(const bigint& a, const bigint& q)
 {
   if (div(q,a) || div(q,a-1) || div(3,q+1))
@@ -138,8 +57,8 @@ vector<bigint> image_mod_cubes(const cubic& F, const bigint& q)
 
   // first see if 0 is a value:
 
-  vector<bigint> coeffs = {F.a(), F.b(), F.c(), F.d()};
-  if (has_roots_mod(F, q))
+  //  vector<bigint> coeffs = {F.a(), F.b(), F.c(), F.d()};
+  if (F.has_roots_mod(q))
     images.push_back(BIGINT(0));
 
   // if q=2 (mod 3) or q=3, then all nozero values occur and all are cubes:
@@ -220,7 +139,7 @@ int modaCheck(const cubic& F, const bigint& a)
   if (a==1)
     return 1;
 
-  bigint g = content(F);
+  bigint g = F.content();
   if (!div(g,a))
     return 0;
 
@@ -239,7 +158,7 @@ int modaCheck(const cubic& F, const bigint& a)
 
   // Now a is a prime power p^e
   bigint p = plist[0];
-  if (!has_roots_mod(F,p))
+  if (!F.has_roots_mod(p))
     return 0;
   if (val(p,a)==1) // a=p, nothing more to do
     return 1;
@@ -260,7 +179,7 @@ int modaCheck(const cubic& F, const bigint& a)
           return 1;
     }
   // find affine roots r mod p:
-  vector<bigint> roots = roots_mod(F,p);
+  vector<bigint> roots = F.roots_mod(p);
   for (auto r = roots.begin(); r!=roots.end(); ++r)
     {
       // Test (u,v) = (r+p*w, 1) for w mod p^{e-1}

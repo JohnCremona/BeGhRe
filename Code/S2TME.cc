@@ -66,7 +66,7 @@ int main ()
                                                        0); // verbosity level
                   for (auto gi = glist.begin(); gi!=glist.end(); ++gi)
                     {
-                      if (is_primitive(*gi))
+                      if (gi->is_primitive())
                         {
                           cout << D << " ";
                           vector<int> data = {*s, *alpha0, *beta0};
