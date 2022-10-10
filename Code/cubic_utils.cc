@@ -46,7 +46,7 @@ int is_cube(const bigint& a, const bigint& q)
     return 1;
   bigint b;
   power_mod(b, a, (q-1)/3, q); // b = a^(q-1)/3 mod q
-  return div(q,b);
+  return div(q,b-1);
 }
 
 // for q prime, returns a list of representatives of the values of
