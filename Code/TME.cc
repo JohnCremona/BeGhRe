@@ -167,6 +167,8 @@ TM_RHS::operator string() const
   return s.str();
 }
 
+//#define DEBUG12
+
 vector<cubic> get_cubics(const Ddata& DD)
 {
   // (12) says that if val(3,disc(F))>=3 then restrict to b=c=0 (mod 3):
@@ -175,6 +177,9 @@ vector<cubic> get_cubics(const Ddata& DD)
                                        0, // 0 to exclude reducibles
                                        1, // 1 for GL2-equivalence
                                        0); // verbosity level
+#ifdef DEBUG12
+  cout<<"D="<<DD.D<<": "<<Flist.size()<<" cubics before applying (12): "<<Flist<<endl;
+#endif
   vector<cubic> Flist2;
   for(auto Fi = Flist.begin(); Fi!=Flist.end(); ++Fi)
     {
@@ -184,7 +189,16 @@ vector<cubic> get_cubics(const Ddata& DD)
           F.normalise(); // 1 for gl2
           Flist2.push_back(F);
         }
+#ifdef DEBUG12
+      else
+        {
+          cout << "omitting F="<<F<<" as (12) not satisfied"<<endl;
+        }
+#endif
     }
+#ifdef DEBUG12
+  cout<<"D="<<DD.D<<": "<<Flist2.size()<<" cubics after applying (12): "<<Flist2<<endl;
+#endif
   return Flist2;
 }
 
@@ -262,6 +276,11 @@ vector<TM_eqn> get_TMeqnsD(const Ddata& DD)
   vector<TM_eqn> TMeqns;
   vector<cubic> Flist = get_cubics(DD);
   vector<TM_RHS> RHSlist = get_RHS(DD);
+#ifdef DEBUG12
+  cout<<"D = "<<DD.D<<": "<<endl;
+  cout<<"  "<<Flist.size()<<" cubics: "<<Flist<<endl;
+  cout<<"  "<<RHSlist.size()<<" RHSs"<<endl;
+#emdif
   for (auto Fi=Flist.begin(); Fi!=Flist.end(); ++Fi)
     {
       cubic F = *Fi;
