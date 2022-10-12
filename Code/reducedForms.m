@@ -18,6 +18,7 @@ Created
 */
 
 VERBOSE_LOCAL := false; // set to true to see details of localTest()
+//VERBOSE_LOCAL := true; // set to true to see details of localTest()
 
 primes23:=function(alpha,beta)
     /*
@@ -164,8 +165,8 @@ verifyPosReduced:=function(a,b,c,d,df)
     if (IsIrreducible(F/gcd) eq false) then
 	return false;
     end if;
-    if (beta0 ge 3) and (IsDivisibleBy(b,3) eq false) and
-       (IsDivisibleBy(b,3) eq false) then
+    // Verify (12) holds: b=c=0 (mod 3) if beta0>=3
+    if (beta0 ge 3) and not (IsDivisibleBy(b,3) and IsDivisibleBy(c,3)) then
 	return false;
     end if;
     return true;
@@ -274,8 +275,8 @@ verifyNegReduced:=function(a,b,c,d,df)
     if (IsIrreducible(F/gcd) eq false) then
 	return false;
     end if;
-    if (beta0 ge 3) and (IsDivisibleBy(b,3) eq false) and
-       (IsDivisibleBy(b,3) eq false) then
+    // Verify (12) holds: b=c=0 (mod 3) if beta0>=3
+    if (beta0 ge 3) and not (IsDivisibleBy(b,3) and IsDivisibleBy(c,3)) then
 	return false;
     end if;
     return true;
@@ -447,9 +448,6 @@ localTest:=function(N,alist,a,primelist)
 	      which cannot appear with positive exponent on the RHS. This list
 	      is empty when a local obstruction exists.
    */
-    if VERBOSE_LOCAL then
-      print "Applying local tests to F = ",alist,", a=",a," with primelist ",primelist;
-    end if;
     QUV<U,V>:=PolynomialRing(Rationals(),2);
     Qx<x>:= PolynomialRing(Rationals());
     assert &and[a_i in Integers() : a_i in alist];
@@ -459,6 +457,12 @@ localTest:=function(N,alist,a,primelist)
     F:=&+[alist[i+1]*U^(3-i)*V^i : i in [0..3]];
     assert IsHomogeneous(F);
     DF:=Integers()!Discriminant(Evaluate(F,[x,1]));
+    if VERBOSE_LOCAL then
+      print "Applying local tests to F = ",alist,", D=",DF,", a=",a," with primelist ",primelist;
+      if (a ge 5000) then
+        print " - Skipping modpCheckDivRHS(F,a) since a=",a," >=5000";
+      end if;
+    end if;
     if (a ne 1) and (a lt 5000) then
 	_,hasSol:=modpCheckDivRHS(F,a);
 	// Verify the value a can divide the RHS.
@@ -470,6 +474,12 @@ localTest:=function(N,alist,a,primelist)
 	end if;
     end if;
     testPrimes:=[p : p in primelist | p lt 5000];
+    if VERBOSE_LOCAL then
+      skipped_primes:=[p : p in primelist | p gt 5000];
+      if #skipped_primes gt 0 then
+        print " - Skipping modpCheck(F,p) for p in ",skipped_primes;
+      end if;
+    end if;
     toRemove:=[];
     for p in testPrimes do
 	// Search for solutions to F(u,v) = a p_1^{z_1} ... p_v^{z_v} mod p
