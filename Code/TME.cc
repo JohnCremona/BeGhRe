@@ -186,7 +186,6 @@ vector<cubic> get_cubics(const Ddata& DD)
       cubic F = *Fi;
       if (eqn12 || (div(three,F.b()) && div(three,F.c())))
         {
-          F.normalise(); // 1 for gl2
           Flist2.push_back(F);
         }
 #ifdef DEBUG12
