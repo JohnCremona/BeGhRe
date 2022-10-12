@@ -1,6 +1,10 @@
 // Program to list irreducible cubic forms associated to elliptic
 // curves of given conductor with no 2-torsion
 
+// Usage:
+// ./N2TME <N>  # for one conductor N
+// ./N2TME <N1> <N2>  # for all conductors from N1 to N2 inclusive
+
 #include <eclib/marith.h>
 #include <eclib/unimod.h>
 #include <eclib/polys.h>
@@ -8,28 +12,48 @@
 
 #include "TME.h"
 
-//#define VERBOSE
+#define VERBOSE 0
 
-int main ()
+int main (int argc, char *argv[])
 {
-  initprimes("PRIMES");
-  bigint N, N0, N1, D;
-  int n;
-#ifdef VERBOSE
-  while(cerr << "Enter conductor (0 to stop): ", cin >> n, n>0)
-#else
-  while(cin >> n, n>0)
-#endif
+  if ( (argc < 2) || (argc > 3) )
     {
-#ifdef VERBOSE
-      cout << "N = " << n << endl;
+      cerr << "Usage: N2TME N or N2TME N1 N2" <<endl;
+      return 0;
+    }
+  long n1 = atoi(argv[1]), n2;
+  if (argc == 3)
+    {
+      n2 = atoi(argv[2]);
+    }
+  else
+    {
+      n2 = n1;
+    }
+
+#if VERBOSE
+  if (argc==2)
+    cerr << "TM equations for conductor " << n1 << endl;
+  else
+    cerr << "TM equations for conductors from " << n1 << " to " << n2 << endl;
+#endif
+  initprimes("PRIMES");
+
+  for (long n=n1; n<=n2; n++)
+    {
+#if VERBOSE
+      cout << "N = " << n << ": " <<flush;
 #endif
       if (!is_valid_conductor(n))
-        continue;
-
+        {
+#if VERBOSE
+          cout << " -- not a valid conductor" << endl;
+#endif
+          continue;
+        }
       vector<TM_eqn> TM_eqns = get_TMeqnsN(n);
 
-#ifdef VERBOSE
+#if VERBOSE
       int neqns = TM_eqns.size();
       if (neqns)
         cout << neqns;
@@ -42,10 +66,6 @@ int main ()
         {
           string s(*T);
           cout << s << endl;
-          TM_eqn Tcopy(s);
-          string scopy(Tcopy);
-          if (s.compare(scopy))
-            cout << "*********** copy is " << scopy << endl;
         }
     }
 }
