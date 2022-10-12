@@ -14,6 +14,17 @@
 
 #define VERBOSE 0
 
+// The (relative) directory to hold output files:
+const string output_directory = "../Data/Forms/";
+// For each N the output filename is {N}Forms.csv
+
+string output_filename(long n)
+{
+  ostringstream s;
+  s << output_directory << n << "Forms.csv";
+  return s.str();
+}
+
 int main (int argc, char *argv[])
 {
   if ( (argc < 2) || (argc > 3) )
@@ -51,6 +62,7 @@ int main (int argc, char *argv[])
 #endif
           continue;
         }
+      string ofname = output_filename(n);
       vector<TM_eqn> TM_eqns = get_TMeqnsN(n);
 
 #if VERBOSE
@@ -60,12 +72,20 @@ int main (int argc, char *argv[])
       else
         cout <<"No";
       cout << " TM equations for conductor " << n << endl;
+      cout << "Writing output to " << ofname << endl;
 #endif
-
+      ofstream fout;
+      fout.open(ofname.c_str());
       for (auto T = TM_eqns.begin(); T!=TM_eqns.end(); ++T)
         {
-          string s(*T);
-          cout << s << endl;
+          // output to screen includes N and D fields:
+          cout << T->as_string(1) << endl;
+          // output to file excludes N and D fields:
+          fout << T->as_string(0) << endl;
         }
+      fout.close();
+#if VERBOSE
+      cout << neqns << " lines written to " << ofname << endl;
+#endif
     }
 }

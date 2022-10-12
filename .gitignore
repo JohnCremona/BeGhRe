@@ -15,8 +15,11 @@
 # Emacs backup files
 *~
 
-
 # programs:
 Code/N2TME
 Code/S2TME
 Code/TME_compare
+
+# output data files
+Data/Forms/*.csv
+

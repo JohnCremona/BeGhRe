@@ -260,10 +260,12 @@ int TM_eqn::local_test()
   return 1;
 }
 
-TM_eqn::operator string() const
+// for output (puts either N,D,[a,b,c,d],A,plist or [a,b,c,d],A,plist into string)
+string TM_eqn::as_string(int ND) const
 {
   ostringstream s;
-  s << DD.NN.N << "," << DD.D << ",";
+  if (ND)
+    s << DD.NN.N << "," << DD.D << ",";
   F.output(s);
   s << "," << (string)RHS;
   return s.str();

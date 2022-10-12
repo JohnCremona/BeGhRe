@@ -80,14 +80,20 @@ public:
     :DD(dd), F(f), RHS(rhs)
   {;}
 
-  // Construct from a string N,D,[a,b,c,d],A,plist
+  // Construct from a string "N,D,[a,b,c,d],A,plist"
   TM_eqn(const string& s);
 
   // local test: return 0 if impossible, else 1 (and the RHS may have changed)
   int local_test();
 
-  // for output (outputs N,D,[a,b,c,d],A,plist)
-  operator string() const;
+  // for output (puts either "N,D,[a,b,c,d],A,plist" or "[a,b,c,d],A,plist" into string)
+  string as_string(int ND=1) const;
+
+  // for long output (converts to string containing "N,D,[a,b,c,d],A,plist")
+  operator string() const
+  {
+    return as_string(1);
+  }
 
   // for input (parsing of a string of the same form as output)
 
