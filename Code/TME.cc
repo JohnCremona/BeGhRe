@@ -387,7 +387,7 @@ TM_eqn::TM_eqn(const string& s)
   F = cubic(a,b,c,d);
   unimod m;
   F.sl2_reduce(m);
-  F.normalise();
+  F.normalise(m);
   // now read the primes (there may be none)
   vector<bigint> plist;
   bigint p;

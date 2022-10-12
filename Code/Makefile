@@ -4,8 +4,8 @@
 # directory, for example (if installed in the usual place) /usr/local,
 # or if installed anywhere else set the install directory here:
 
-#ECLIB_BASE=/usr/local
-ECLIB_BASE=$(HOME)/eclib
+ECLIB_BASE=/usr/local
+#ECLIB_BASE=$(HOME)/eclib
 INCDIR = $(ECLIB_BASE)/include
 LIBDIR = $(ECLIB_BASE)/lib
 
