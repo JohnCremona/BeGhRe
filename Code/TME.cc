@@ -280,7 +280,7 @@ vector<TM_eqn> get_TMeqnsD(const Ddata& DD)
   cout<<"D = "<<DD.D<<": "<<endl;
   cout<<"  "<<Flist.size()<<" cubics: "<<Flist<<endl;
   cout<<"  "<<RHSlist.size()<<" RHSs"<<endl;
-#emdif
+#endif
   for (auto Fi=Flist.begin(); Fi!=Flist.end(); ++Fi)
     {
       cubic F = *Fi;
